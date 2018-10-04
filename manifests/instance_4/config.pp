@@ -17,6 +17,7 @@ define jboss::instance_4::config (
   $mgmt_passwd,
   $jmx_user,
   $jmx_passwd,
+  $init_style = 'init'
   $instance_name = $title,) {
   $jboss_inst_folder = "/opt/jboss-${version}.GA"
   $shutdown_cmd = 'shutdown.sh -s ${IF} -S'
@@ -46,13 +47,19 @@ define jboss::instance_4::config (
     mode    => '0755',
   }
 
-  # Init script
-  file { "/etc/init.d/jboss-${instance_name}":
-    ensure  => present,
-    content => template("${module_name}/jboss-init.erb"),
-    owner   => root,
-    group   => root,
-    mode    => '0755',
+  if $init_style == 'init' {
+    # Init script
+    file { "/etc/init.d/jboss-${instance_name}":
+      ensure  => present,
+      content => template("${module_name}/jboss-init.erb"),
+      owner   => root,
+      group   => root,
+      mode    => '0755',
+    }
+  }else{
+    systemd::unit_file {"jboss-${instance_name}.service":
+      content => template("${module_name}/jboss.service.erb");
+    }
   }
 
   # Link a directory log
